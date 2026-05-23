@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Jumia Log Market</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red:#8B1A1A;--red2:#B22222;--navy:#0D1B3E;--navy2:#1A2F5E;
+  --white:#fff;--bg:#F2F3F7;--card:#fff;--text:#111827;--text2:#6B7280;
+  --border:#E5E7EB;--green:#16A34A;--orange:#D97706;
+  --shadow:0 2px 16px rgba(0,0,0,0.07);--radius:14px;
+}
+.dark{--bg:#0A0A0A;--card:#141414;--text:#F9FAFB;--text2:#9CA3AF;--border:#262626;--shadow:0 2px 16px rgba(0,0,0,0.5);}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);transition:background .3s,color .3s;overflow-x:hidden;}
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* NAV */
+.topnav{background:var(--card);padding:13px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;box-shadow:var(--shadow);}
+.logo{font-family:'Outfit',sans-serif;font-weight:900;font-size:21px;color:var(--red);letter-spacing:-0.5px;}
+.logo span{color:var(--navy);}
+.nav-r{display:flex;gap:10px;align-items:center;}
+.icon-btn{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text);padding:4px;}
+.dark-btn{background:var(--red);color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;font-weight:700;}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,var(--navy) 0%,var(--red) 100%);padding:26px 16px 22px;color:#fff;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-30px;top:-30px;width:160px;height:160px;background:rgba(255,255,255,0.04);border-radius:50%;}
+.hero h1{font-family:'Outfit',sans-serif;font-size:22px;font-weight:800;}
+.hero p{font-size:12px;opacity:.75;margin-top:3px;}
+.breadcrumb{font-size:11px;opacity:.6;margin-top:5px;}
+
+/* CONTENT */
+.content{flex:1;padding:15px;overflow-y:auto;padding-bottom:85px;}
+
+/* CARDS */
+.card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:13px;}
+.balance-card{background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:var(--radius);padding:20px;color:#fff;margin-bottom:15px;position:relative;overflow:hidden;}
+.balance-card::after{content:'₦';position:absolute;right:-5px;top:-15px;font-size:110px;opacity:.04;font-weight:900;}
+.bal-label{font-size:11px;opacity:.7;margin-bottom:3px;}
+.bal-amount{font-family:'Outfit',sans-serif;font-size:30px;font-weight:900;letter-spacing:-1px;}
+.bal-actions{display:flex;gap:8px;margin-top:14px;}
+.bal-btn{flex:1;background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:8px;padding:8px 4px;font-size:11px;font-weight:700;cursor:pointer;text-align:center;font-family:'Outfit',sans-serif;}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:15px;}
+.stat-card{background:var(--card);border-radius:12px;padding:13px 8px;text-align:center;box-shadow:var(--shadow);border:1px solid var(--border);}
+.stat-num{font-family:'Outfit',sans-serif;font-size:20px;font-weight:800;color:var(--red);}
+.stat-lbl{font-size:9px;color:var(--text2);margin-top:2px;font-weight:600;}
+
+/* SECTION */
+.sec-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px;}
+.sec-title{font-family:'Outfit',sans-serif;font-size:15px;font-weight:800;}
+.view-all{color:var(--red);font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--red);border-radius:6px;padding:4px 10px;background:none;font-family:'DM Sans',sans-serif;}
+
+/* CATEGORIES */
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:15px;}
+.cat-item{background:var(--card);border-radius:12px;padding:13px 6px;text-align:center;box-shadow:var(--shadow);border:1px solid var(--border);cursor:pointer;transition:transform .15s,border-color .15s;}
+.cat-item:active{transform:scale(.95);}
+.cat-item:hover{border-color:var(--red);}
+.cat-emoji{font-size:24px;margin-bottom:5px;display:flex;align-items:center;justify-content:center;height:36px;}
+.cat-name{font-size:9px;font-weight:700;color:var(--text);line-height:1.3;}
+
+/* PRODUCTS */
+.prod-card{background:var(--card);border-radius:var(--radius);padding:13px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:11px;display:flex;align-items:center;gap:12px;}
+.prod-icon{width:46px;height:46px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.prod-info{flex:1;min-width:0;}
+.prod-name{font-family:'Outfit',sans-serif;font-weight:700;font-size:12px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.prod-stock{font-size:10px;color:var(--text2);margin-bottom:3px;}
+.prod-price{font-family:'Outfit',sans-serif;font-weight:800;color:var(--red);font-size:13px;}
+.buy-btn{background:var(--red);color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap;flex-shrink:0;}
+
+/* FORM */
+.form-group{margin-bottom:14px;}
+.form-label{font-size:12px;font-weight:700;margin-bottom:5px;display:block;}
+.form-label span{color:var(--red);}
+.form-input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border .2s;}
+.form-input:focus{border-color:var(--red);}
+select.form-input{appearance:none;}
+.btn-primary{width:100%;background:var(--red);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Outfit',sans-serif;transition:opacity .2s;letter-spacing:.2px;}
+.btn-primary:hover{opacity:.9;}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+.btn-outline{width:100%;background:none;color:var(--red);border:2px solid var(--red);border-radius:10px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:9px;}
+.link-text{text-align:center;font-size:12px;color:var(--text2);margin-top:13px;}
+.link-text a{color:var(--red);font-weight:700;cursor:pointer;}
+
+/* BOTTOM NAV */
+.bottom-nav{background:var(--card);border-top:1px solid var(--border);display:flex;position:fixed;bottom:0;left:0;right:0;z-index:100;box-shadow:0 -3px 15px rgba(0,0,0,0.07);}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 4px;cursor:pointer;color:var(--text2);font-size:8px;font-weight:700;font-family:'Outfit',sans-serif;gap:2px;transition:color .2s;}
+.bnav-item.active{color:var(--red);}
+.bicon{font-size:19px;}
+
+/* FLOATING */
+.float-btns{position:fixed;bottom:70px;left:12px;display:flex;flex-direction:column;gap:7px;z-index:200;}
+.float-btn{display:flex;align-items:center;gap:7px;padding:9px 13px;border-radius:22px;border:none;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.2);font-family:'Outfit',sans-serif;}
+.tg-btn{background:#0088cc;color:#fff;}
+.wa-btn{background:#25D366;color:#fff;}
+
+/* ORDERS */
+.order-row{background:var(--card);border-radius:10px;padding:11px 13px;margin-bottom:9px;border:1px solid var(--border);}
+.order-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.order-name{font-weight:700;font-size:12px;}
+.badge{padding:3px 9px;border-radius:20px;font-size:10px;font-weight:800;}
+.badge-green{background:#DCFCE7;color:var(--green);}
+.badge-orange{background:#FEF3C7;color:var(--orange);}
+.badge-red2{background:#FEE2E2;color:#DC2626;}
+.order-detail{font-size:11px;color:var(--text2);display:flex;justify-content:space-between;}
+
+/* DEPOSIT AMOUNTS */
+.amount-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px;}
+.amount-chip{background:var(--bg);border:2px solid var(--border);border-radius:8px;padding:9px;text-align:center;font-weight:800;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;color:var(--text);transition:all .15s;}
+.amount-chip.selected,.amount-chip:hover{border-color:var(--red);color:var(--red);background:#FFF0F0;}
+
+/* TABS */
+.tabs{display:flex;background:var(--bg);border-radius:10px;padding:3px;margin-bottom:14px;}
+.tab{flex:1;text-align:center;padding:8px 4px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Outfit',sans-serif;color:var(--text2);transition:all .2s;}
+.tab.active{background:var(--red);color:#fff;}
+
+/* DRAWER */
+.drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:300;}
+.drawer-overlay.open{display:block;}
+.drawer{position:fixed;top:0;left:-285px;width:285px;height:100vh;background:var(--card);z-index:400;transition:left .3s;overflow-y:auto;}
+.drawer.open{left:0;}
+.drawer-head{background:linear-gradient(135deg,var(--navy),var(--red));padding:40px 18px 18px;color:#fff;}
+.drawer-avatar{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-size:22px;font-weight:900;margin-bottom:10px;}
+.drawer-name{font-family:'Outfit',sans-serif;font-size:17px;font-weight:800;}
+.drawer-email{font-size:11px;opacity:.75;margin-top:2px;}
+.drawer-bal{margin-top:10px;background:rgba(255,255,255,0.13);border-radius:8px;padding:7px 11px;font-size:12px;font-weight:700;}
+.drawer-menu{padding:8px 0;}
+.drawer-item{display:flex;align-items:center;gap:13px;padding:13px 18px;cursor:pointer;font-size:13px;font-weight:600;border-bottom:1px solid var(--border);color:var(--text);transition:background .15s;}
+.drawer-item:hover{background:var(--bg);}
+.drawer-item .di{font-size:17px;}
+.drawer-logout{color:var(--red);font-weight:800;}
+
+/* TOAST */
+.toast{position:fixed;top:75px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:9px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;}
+.toast.show{opacity:1;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:500;align-items:flex-end;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card);border-radius:20px 20px 0 0;padding:22px 18px 34px;width:100%;animation:slideUp .3s ease;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-title{font-family:'Outfit',sans-serif;font-size:17px;font-weight:900;margin-bottom:5px;}
+.modal-sub{font-size:12px;color:var(--text2);margin-bottom:18px;}
+.pay-method{display:flex;align-items:center;gap:11px;padding:13px;border:2px solid var(--border);border-radius:12px;margin-bottom:9px;cursor:pointer;transition:border .2s;}
+.pay-method.sel{border-color:var(--red);}
+.pay-method-icon{font-size:22px;}
+.pay-method-name{font-weight:700;font-size:13px;}
+.pay-method-desc{font-size:11px;color:var(--text2);}
+
+/* LOADING */
+.loader{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* AVATAR */
+.avatar{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--navy));display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Outfit',sans-serif;font-size:24px;font-weight:900;margin:0 auto 11px;}
+
+/* SETTINGS ITEM */
+.settings-item{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--border);}
+.settings-label{font-size:13px;font-weight:600;}
+.settings-value{font-size:12px;color:var(--text2);}
+.toggle{width:42px;height:23px;background:var(--border);border-radius:12px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.toggle.on{background:var(--red);}
+.toggle::after{content:'';position:absolute;width:17px;height:17px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,0.2);}
+.toggle.on::after{left:22px;}
+
+/* AUTH BOX */
+.auth-top{background:linear-gradient(135deg,var(--navy),var(--red));padding:55px 20px 35px;color:#fff;text-align:center;}
+.auth-logo{font-family:'Outfit',sans-serif;font-size:40px;font-weight:900;letter-spacing:-2px;}
+.auth-tagline{font-size:13px;opacity:.8;margin-top:5px;}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- DRAWER -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div class="drawer-avatar" id="drawerAvatar">?</div>
+    <div class="drawer-name" id="drawerName">Loading...</div>
+    <div class="drawer-email" id="drawerEmail"></div>
+    <div class="drawer-bal">💰 Balance: <span id="drawerBalance">₦0.00</span></div>
+  </div>
+  <div class="drawer-menu">
+    <div class="drawer-item" onclick="nav('dashboard');closeDrawer()"><span class="di">🏠</span> Dashboard</div>
+    <div class="drawer-item" onclick="nav('products');closeDrawer()"><span class="di">🛍️</span> Products</div>
+    <div class="drawer-item" onclick="nav('payments');closeDrawer()"><span class="di">💰</span> Payments</div>
+    <div class="drawer-item" onclick="nav('orders');closeDrawer()"><span class="di">📦</span> Orders</div>
+    <div class="drawer-item" onclick="nav('bills');closeDrawer()"><span class="di">⚡</span> Bill Payments</div>
+    <div class="drawer-item" onclick="nav('airtime');closeDrawer()"><span class="di">📱</span> Airtime & Data</div>
+    <div class="drawer-item" onclick="nav('sms');closeDrawer()"><span class="di">💬</span> SMS Tools</div>
+    <div class="drawer-item" onclick="nav('contact');closeDrawer()"><span class="di">🎧</span> Contact Us</div>
+    <div class="drawer-item" onclick="nav('settings');closeDrawer()"><span class="di">⚙️</span> Settings</div>
+    <div class="drawer-item" onclick="nav('profile');closeDrawer()"><span class="di">👤</span> Profile</div>
+    <div class="drawer-item" onclick="showToast('Opening Telegram...')"><span class="di">📣</span> Join Telegram</div>
+    <div class="drawer-item drawer-logout" onclick="logout()"><span class="di">🚪</span> Logout</div>
+  </div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div class="modal-overlay" id="paystackModal">
+  <div class="modal" style="max-height:90vh;overflow-y:auto;">
+    <div class="modal-title">💳 Choose Payment Method</div>
+    <div class="modal-sub">Amount to deposit: <strong id="payAmountDisplay">₦0.00</strong></div>
+    
+    <!-- METHOD SELECTOR -->
+    <div class="pay-method sel" id="pm-bank" onclick="selectPayMethod('bank')">
+      <div class="pay-method-icon">🏦</div>
+      <div style="flex:1"><div class="pay-method-name">Bank Transfer</div><div class="pay-method-desc">Transfer to our account directly</div></div>
+      <span id="pm-bank-check">✅</span>
+    </div>
+    <div class="pay-method" id="pm-paystack" onclick="selectPayMethod('paystack')">
+      <div class="pay-method-icon">💳</div>
+      <div style="flex:1"><div class="pay-method-name">Card / USSD / Bank</div><div class="pay-method-desc">Pay securely with Paystack</div></div>
+      <span id="pm-paystack-check" style="display:none">✅</span>
+    </div>
+
+    <!-- BANK TRANSFER DETAILS -->
+    <div id="bankDetails" style="margin-top:14px;">
+      <div style="background:var(--bg);border-radius:12px;padding:16px;border:2px solid var(--red);margin-bottom:14px;">
+        <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:13px;margin-bottom:12px;color:var(--red);">📋 Transfer Details</div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:12px;color:var(--text2);">Bank Name</span>
+          <span style="font-size:12px;font-weight:800;">Moniepoint</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:12px;color:var(--text2);">Account Number</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:14px;font-weight:900;font-family:'Outfit',sans-serif;">8085256239</span>
+            <button onclick="copyAccNum()" style="background:var(--red);color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;">Copy</button>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:12px;color:var(--text2);">Account Name</span>
+          <span style="font-size:12px;font-weight:800;">Elechi Thankgod</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span style="font-size:12px;color:var(--text2);">Amount</span>
+          <span style="font-size:14px;font-weight:900;color:var(--red);font-family:'Outfit',sans-serif;" id="bankAmount">₦0.00</span>
+        </div>
+      </div>
+
+      <div style="background:#FEF3C7;border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid #F59E0B;">
+        <div style="font-size:11px;font-weight:700;color:#92400E;">⚠️ Important Instructions:</div>
+        <div style="font-size:11px;color:#92400E;margin-top:5px;line-height:1.5;">
+          1. Transfer the exact amount shown above<br>
+          2. Use your <strong>username</strong> as transfer narration/description<br>
+          3. After transfer tap "I Have Paid" button below<br>
+          4. Your wallet will be credited within 5-30 minutes
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Your Username or Email <span>*</span></label>
+        <input class="form-input" id="senderName" placeholder="Enter your username so we identify you">
+      </div>
+
+      <div style="display:flex;gap:9px;">
+        <button class="btn-outline" style="margin:0;padding:11px;" onclick="closePaystack()">Cancel</button>
+        <button class="btn-primary" style="margin:0;" onclick="submitBankPayment()" id="paidBtn">✅ I Have Paid</button>
+      </div>
+
+      <button onclick="openWhatsApp()" style="width:100%;background:#25D366;color:#fff;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:10px;">
+        📱 Send Payment Proof on WhatsApp
+      </button>
+    </div>
+
+    <!-- PAYSTACK REAL PAYMENT -->
+    <div id="paystackDetails" style="display:none;margin-top:14px;">
+      <div style="background:#0BA4DB;color:#fff;border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:12px;font-weight:700;">🔒 Secured by Paystack</div>
+      <div style="background:var(--bg);border-radius:12px;padding:14px;margin-bottom:14px;">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Amount to pay</div>
+        <div style="font-family:'Outfit',sans-serif;font-size:24px;font-weight:900;color:var(--red);" id="paystackAmountDisplay">₦0.00</div>
+      </div>
+      <div style="display:flex;gap:9px;">
+        <button class="btn-outline" style="margin:0;padding:11px;" onclick="closePaystack()">Cancel</button>
+        <button class="btn-primary" style="margin:0;" onclick="payWithPaystack()" id="paystackPayBtn">Pay Now 💳</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== LOGIN ====== -->
+<div class="screen active" id="screen-login">
+  <div class="auth-top">
+    <div class="auth-logo">JLM</div>
+    <div style="font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;margin-top:4px;">Jumia Log Market</div>
+    <div class="auth-tagline">Your #1 Digital Marketplace 🚀</div>
+  </div>
+  <div class="content" style="padding-top:22px;padding-bottom:20px;">
+    <div class="card">
+      <div style="font-family:'Outfit',sans-serif;font-size:21px;font-weight:900;margin-bottom:3px;">Login</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:18px;">Welcome Back! 👋</div>
+      <div class="form-group"><label class="form-label">Email <span>*</span></label><input class="form-input" type="email" id="loginEmail" placeholder="Enter email address"></div>
+      <div class="form-group"><label class="form-label">Password <span>*</span></label><input class="form-input" type="password" id="loginPass" placeholder="Enter password"></div>
+      <div style="text-align:right;margin-bottom:14px;"><span style="color:var(--red);font-size:12px;font-weight:700;cursor:pointer;" onclick="nav('forgot')">Forgot your password?</span></div>
+      <button class="btn-primary" id="loginBtn" onclick="login()">Login</button>
+      <div class="link-text">Don't have an account? <a onclick="nav('register')">Register here</a></div>
+    </div>
+  </div>
+  <div class="float-btns">
+    <button class="float-btn tg-btn" onclick="showToast('Opening Telegram...')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.667l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.978.892z"/></svg>
+      Telegram
+    </button>
+    <button class="float-btn wa-btn" onclick="showToast('Opening WhatsApp...')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      WhatsApp
+    </button>
+  </div>
+</div>
+
+<!-- ====== REGISTER ====== -->
+<div class="screen" id="screen-register">
+  <div class="auth-top" style="padding:40px 20px 25px;">
+    <div class="auth-logo" style="font-size:28px;">JLM</div>
+    <div style="font-size:14px;margin-top:4px;font-weight:600;">Create Your Account</div>
+  </div>
+  <div class="content" style="padding-top:18px;padding-bottom:20px;">
+    <div class="card">
+      <div class="form-group"><label class="form-label">Full Name <span>*</span></label><input class="form-input" type="text" id="regName" placeholder="Enter full name"></div>
+      <div class="form-group"><label class="form-label">Username <span>*</span></label><input class="form-input" type="text" id="regUsername" placeholder="Choose a username"></div>
+      <div class="form-group"><label class="form-label">Email <span>*</span></label><input class="form-input" type="email" id="regEmail" placeholder="Enter email address"></div>
+      <div class="form-group"><label class="form-label">Phone Number <span>*</span></label><input class="form-input" type="tel" id="regPhone" placeholder="e.g. 08012345678"></div>
+      <div class="form-group"><label class="form-label">Password <span>*</span></label><input class="form-input" type="password" id="regPass" placeholder="Min 6 characters"></div>
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:14px;font-size:11px;color:var(--text2);"><input type="checkbox" id="regTerms" style="margin-top:2px;"> I agree to the Terms & Conditions</div>
+      <button class="btn-primary" id="regBtn" onclick="register()">Create Account</button>
+      <div class="link-text">Already have an account? <a onclick="nav('login')">Login here</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== FORGOT PASSWORD ====== -->
+<div class="screen" id="screen-forgot">
+  <div class="topnav"><button class="icon-btn" onclick="nav('login')">←</button><div class="logo">JL<span>M</span></div><div></div></div>
+  <div class="hero"><h1>🔑 Reset Password</h1><div class="breadcrumb">Home → Reset Password</div></div>
+  <div class="content" style="padding-top:18px;padding-bottom:20px;">
+    <div class="card">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px;">Enter your email and we'll send you a reset link.</div>
+      <div class="form-group"><label class="form-label">Email <span>*</span></label><input class="form-input" type="email" id="forgotEmail" placeholder="Enter your email"></div>
+      <button class="btn-primary" onclick="resetPassword()">Send Reset Link</button>
+      <div class="link-text"><a onclick="nav('login')">← Back to Login</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== DASHBOARD ====== -->
+<div class="screen" id="screen-dashboard">
+  <div class="topnav">
+    <button class="icon-btn" onclick="openDrawer()">☰</button>
+    <div class="logo">JL<span>M</span></div>
+    <div class="nav-r">
+      <button class="dark-btn" onclick="toggleDark()">🌙</button>
+      <button class="icon-btn" onclick="showToast('🔔 No new notifications')">🔔</button>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:70px;">
+    <div class="content">
+      <div style="margin-bottom:14px;">
+        <div style="font-family:'Outfit',sans-serif;font-size:17px;font-weight:900;">Welcome back, <span id="dashName">User</span>! 👋</div>
+        <div style="font-size:12px;color:var(--text2);">Here's your account overview</div>
+      </div>
+      <div class="balance-card">
+        <div class="bal-label">💰 Wallet Balance</div>
+        <div class="bal-amount" id="dashBalance">₦0.00</div>
+        <div class="bal-actions">
+          <div class="bal-btn" onclick="nav('deposit')">+ Deposit</div>
+          <div class="bal-btn" onclick="nav('orders')">📦 Orders</div>
+          <div class="bal-btn" onclick="nav('products')">🛍️ Shop</div>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-num" id="dashOrders">0</div><div class="stat-lbl">Orders</div></div>
+        <div class="stat-card"><div class="stat-num" id="dashDeposits">₦0</div><div class="stat-lbl">Deposited</div></div>
+        <div class="stat-card"><div class="stat-num" id="dashPending">0</div><div class="stat-lbl">Pending</div></div>
+      </div>
+      <div class="sec-hdr"><div class="sec-title">⚡ Quick Actions</div></div>
+      <div class="cat-grid">
+        <div class="cat-item" onclick="nav('products')">
+          <div class="cat-emoji"><svg width="32" height="32" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></div>
+          <div class="cat-name">Facebook</div>
+        </div>
+        <div class="cat-item" onclick="nav('products')">
+          <div class="cat-emoji"><svg width="32" height="32" viewBox="0 0 24 24"><defs><radialGradient id="ig1" cx="30%" cy="100%" r="150%"><stop offset="0%" stop-color="#fdf497"/><stop offset="45%" stop-color="#fd5949"/><stop offset="60%" stop-color="#d6249f"/><stop offset="90%" stop-color="#285AEB"/></radialGradient></defs><path fill="url(#ig1)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0 5.838a4 4 0 100 8 4 4 0 000-8zm6.406-1.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></div>
+          <div class="cat-name">Instagram</div>
+        </div>
+        <div class="cat-item" onclick="nav('products')">
+          <div class="cat-emoji"><svg width="32" height="32" viewBox="0 0 24 24" fill="#000"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.28 8.28 0 004.84 1.54V6.78a4.85 4.85 0 01-1.07-.09z"/></svg></div>
+          <div class="cat-name">TikTok</div>
+        </div>
+        <div class="cat-item" onclick="nav('products')">
+          <div class="cat-emoji"><svg width="32" height="32" viewBox="0 0 24 24" fill="#000"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.631 5.905-5.631z"/></svg></div>
+          <div class="cat-name">Twitter / X</div>
+        </div>
+        <div class="cat-item" onclick="nav('products')">
+          <div class="cat-emoji"><svg width="32" height="32" viewBox="0 0 24 24" fill="#00B900"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/><path d="M12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11S18.075 1 12 1zm0 2c4.97 0 9 4.03 9 9s-4.03 9-9 9-9-4.03-9-9 4.03-9 9-9zm-4 5v8h2.5v-3h3V13h-3v-2h3.5V9H8z"/></svg>🔒</div>
+          <div class="cat-name">VPN</div>
+        </div>
+        <div class="cat-item" onclick="nav('airtime')">
+          <div class="cat-emoji"><svg width="32" height="32" viewBox="0 0 24 24" fill="#E91E63"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg></div>
+          <div class="cat-name">Airtime & Data</div>
+        </div>
+        <div class="cat-item" onclick="nav('bills')">
+          <div class="cat-emoji"><svg width="32" height="32" viewBox="0 0 24 24" fill="#FF6F00"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM8 13h8v2H8v-2zm0 4h5v2H8v-2zm0-8h2v2H8V9z"/></svg></div>
+          <div class="cat-name">Bills Payment</div>
+        </div>
+        <div class="cat-item" onclick="nav('sms')">
+          <div class="cat-emoji"><svg width="32" height="32" viewBox="0 0 24 24" fill="#2196F3"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg></div>
+          <div class="cat-name">SMS Verification</div>
+        </div>
+        <div class="cat-item" onclick="nav('deposit')">
+          <div class="cat-emoji"><svg width="32" height="32" viewBox="0 0 24 24" fill="#1565C0"><path d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm14-12v7h3v-7h-3zM11.5 1L2 6v2h19V6l-9.5-5z"/></svg></div>
+          <div class="cat-name">Deposit Funds</div>
+        </div>
+      </div>
+      <div class="sec-hdr"><div class="sec-title">📦 Recent Orders</div><button class="view-all" onclick="nav('orders')">View All</button></div>
+      <div id="dashRecentOrders"><div style="text-align:center;color:var(--text2);font-size:12px;padding:20px;">Loading orders...</div></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="bnav-item active" onclick="nav('dashboard')"><span class="bicon">🏠</span>Home</div>
+    <div class="bnav-item" onclick="nav('products')"><span class="bicon">🛍️</span>Products</div>
+    <div class="bnav-item" onclick="nav('deposit')"><span class="bicon">💳</span>Deposit</div>
+    <div class="bnav-item" onclick="nav('orders')"><span class="bicon">📦</span>Orders</div>
+    <div class="bnav-item" onclick="nav('settings')"><span class="bicon">⚙️</span>Settings</div>
+  </div>
+  <div class="float-btns">
+    <button class="float-btn tg-btn" onclick="showToast('Opening Telegram...')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.667l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.978.892z"/></svg>
+      Telegram
+    </button>
+    <button class="float-btn wa-btn" onclick="showToast('Opening WhatsApp...')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      WhatsApp
+    </button>
+  </div>
+</div>
+
+<!-- ====== PRODUCTS ====== -->
+<div class="screen" id="screen-products">
+  <div class="topnav"><button class="icon-btn" onclick="openDrawer()">☰</button><div class="logo">JL<span>M</span></div><button class="dark-btn" onclick="toggleDark()">🌙</button></div>
+  <div class="hero"><h1>🛍️ Products</h1><div class="breadcrumb">Home → Products</div></div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:70px;">
+    <div class="content">
+      <div style="overflow-x:auto;white-space:nowrap;margin-bottom:13px;padding-bottom:3px;" id="catFilters"></div>
+      <div id="productsList"><div style="text-align:center;color:var(--text2);padding:30px;">Loading products...</div></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="bnav-item" onclick="nav('dashboard')"><span class="bicon">🏠</span>Home</div>
+    <div class="bnav-item active" onclick="nav('products')"><span class="bicon">🛍️</span>Products</div>
+    <div class="bnav-item" onclick="nav('deposit')"><span class="bicon">💳</span>Deposit</div>
+    <div class="bnav-item" onclick="nav('orders')"><span class="bicon">📦</span>Orders</div>
+    <div class="bnav-item" onclick="nav('settings')"><span class="bicon">⚙️</span>Settings</div>
+  </div>
+</div>
+
+<!-- ====== DEPOSIT ====== -->
+<div class="screen" id="screen-deposit">
+  <div class="topnav"><button class="icon-btn" onclick="nav('dashboard')">←</button><div class="logo">JL<span>M</span></div><button class="dark-btn" onclick="toggleDark()">🌙</button></div>
+  <div class="hero"><h1>💳 Deposit Funds</h1><div class="breadcrumb">Home → Deposit</div></div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:30px;">
+    <div class="content">
+      <div class="balance-card" style="margin-bottom:14px;">
+        <div class="bal-label">Current Wallet Balance</div>
+        <div class="bal-amount" id="depositBalance">₦0.00</div>
+      </div>
+      <div class="card">
+        <div style="font-family:'Outfit',sans-serif;font-size:14px;font-weight:800;margin-bottom:11px;">Select Amount</div>
+        <div class="amount-grid">
+          <div class="amount-chip" onclick="pickAmount(this,100)">₦100</div>
+          <div class="amount-chip" onclick="pickAmount(this,200)">₦200</div>
+          <div class="amount-chip" onclick="pickAmount(this,500)">₦500</div>
+          <div class="amount-chip" onclick="pickAmount(this,1000)">₦1,000</div>
+          <div class="amount-chip" onclick="pickAmount(this,5000)">₦5,000</div>
+          <div class="amount-chip" onclick="pickAmount(this,10000)">₦10,000</div>
+        </div>
+        <div class="form-group"><label class="form-label">Or enter custom amount</label><input class="form-input" type="number" id="customAmt" placeholder="Min ₦100" oninput="customAmount(this.value)"></div>
+        <button class="btn-primary" onclick="openPaystack()">Make Payment 💳</button>
+      </div>
+      <div class="card">
+        <div style="font-family:'Outfit',sans-serif;font-size:14px;font-weight:800;margin-bottom:11px;">📋 Deposit History</div>
+        <div id="depositHistory"><div style="text-align:center;color:var(--text2);font-size:12px;padding:15px;">Loading...</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== ORDERS ====== -->
+<div class="screen" id="screen-orders">
+  <div class="topnav"><button class="icon-btn" onclick="openDrawer()">☰</button><div class="logo">JL<span>M</span></div><button class="dark-btn" onclick="toggleDark()">🌙</button></div>
+  <div class="hero"><h1>📦 My Orders</h1><div class="breadcrumb">Home → Orders</div></div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:70px;">
+    <div class="content">
+      <div class="tabs">
+        <div class="tab active" onclick="filterOrders(this,'all')">All</div>
+        <div class="tab" onclick="filterOrders(this,'completed')">Done</div>
+        <div class="tab" onclick="filterOrders(this,'pending')">Pending</div>
+        <div class="tab" onclick="filterOrders(this,'failed')">Failed</div>
+      </div>
+      <div id="ordersList"><div style="text-align:center;color:var(--text2);padding:30px;">Loading orders...</div></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="bnav-item" onclick="nav('dashboard')"><span class="bicon">🏠</span>Home</div>
+    <div class="bnav-item" onclick="nav('products')"><span class="bicon">🛍️</span>Products</div>
+    <div class="bnav-item" onclick="nav('deposit')"><span class="bicon">💳</span>Deposit</div>
+    <div class="bnav-item active" onclick="nav('orders')"><span class="bicon">📦</span>Orders</div>
+    <div class="bnav-item" onclick="nav('settings')"><span class="bicon">⚙️</span>Settings</div>
+  </div>
+</div>
+
+<!-- ====== PAYMENTS ====== -->
+<div class="screen" id="screen-payments">
+  <div class="topnav"><button class="icon-btn" onclick="openDrawer()">☰</button><div class="logo">JL<span>M</span></div><button class="dark-btn" onclick="toggleDark()">🌙</button></div>
+  <div class="hero"><h1>💰 Payments</h1><div class="breadcrumb">Home → Payments</div></div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:30px;">
+    <div class="content">
+      <div class="balance-card" style="margin-bottom:14px;">
+        <div class="bal-label">💰 Wallet Balance</div>
+        <div class="bal-amount" id="paymentsBalance">₦0.00</div>
+        <div class="bal-actions"><div class="bal-btn" onclick="nav('deposit')">+ Top Up</div></div>
+      </div>
+      <div class="card">
+        <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:14px;margin-bottom:11px;">📋 All Transactions</div>
+        <div id="paymentsList"><div style="text-align:center;color:var(--text2);font-size:12px;padding:15px;">Loading...</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== BILLS ====== -->
+<div class="screen" id="screen-bills">
+  <div class="topnav"><button class="icon-btn" onclick="nav('dashboard')">←</button><div class="logo">JL<span>M</span></div><button class="dark-btn" onclick="toggleDark()">🌙</button></div>
+  <div class="hero"><h1>⚡ Bill Payments</h1><div class="breadcrumb">Home → Bills</div></div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:30px;">
+    <div class="content">
+      <div class="tabs">
+        <div class="tab active" onclick="switchBill(this,'electricity')">⚡ Electric</div>
+        <div class="tab" onclick="switchBill(this,'tv')">📺 TV</div>
+        <div class="tab" onclick="switchBill(this,'betting')">⚽ Betting</div>
+      </div>
+      <div id="bill-electricity" class="card">
+        <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:14px;margin-bottom:13px;">⚡ Electricity Payment</div>
+        <div class="form-group"><label class="form-label">Provider</label><select class="form-input"><option>Ikeja Electric (IKEDC)</option><option>Eko Electric (EKEDC)</option><option>Abuja Electric (AEDC)</option><option>Enugu Electric (EEDC)</option><option>Port Harcourt Electric</option><option>Ibadan Electric (IBEDC)</option></select></div>
+        <div class="form-group"><label class="form-label">Meter Number <span>*</span></label><input class="form-input" placeholder="Enter meter number"></div>
+        <div class="form-group"><label class="form-label">Amount (₦) <span>*</span></label><input class="form-input" type="number" placeholder="Min ₦500"></div>
+        <button class="btn-primary" onclick="showToast('⚡ Electricity payment processing...')">Pay Bill</button>
+      </div>
+      <div id="bill-tv" class="card" style="display:none;">
+        <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:14px;margin-bottom:13px;">📺 TV Subscription</div>
+        <div class="form-group"><label class="form-label">Provider</label><select class="form-input"><option>DSTV</option><option>GOtv</option><option>StarTimes</option></select></div>
+        <div class="form-group"><label class="form-label">Smart Card Number <span>*</span></label><input class="form-input" placeholder="Enter smart card number"></div>
+        <div class="form-group"><label class="form-label">Bouquet</label><select class="form-input"><option>Compact — ₦9,000</option><option>Compact Plus — ₦14,250</option><option>Premium — ₦24,500</option><option>GOtv Jolli — ₦4,150</option><option>GOtv Max — ₦5,700</option></select></div>
+        <button class="btn-primary" onclick="showToast('📺 TV subscription processing...')">Subscribe</button>
+      </div>
+      <div id="bill-betting" class="card" style="display:none;">
+        <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:14px;margin-bottom:13px;">⚽ Betting Funding</div>
+        <div class="form-group"><label class="form-label">Bookmaker</label><select class="form-input"><option>Sportybet</option><option>Bet9ja</option><option>1xBet</option><option>BetKing</option><option>NairaBet</option><option>Betway</option></select></div>
+        <div class="form-group"><label class="form-label">User ID <span>*</span></label><input class="form-input" placeholder="Enter betting user ID"></div>
+        <div class="form-group"><label class="form-label">Amount (₦) <span>*</span></label><input class="form-input" type="number" placeholder="Min ₦500"></div>
+        <button class="btn-primary" onclick="showToast('⚽ Betting account funding...')">Fund Account</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== AIRTIME ====== -->
+<div class="screen" id="screen-airtime">
+  <div class="topnav"><button class="icon-btn" onclick="nav('dashboard')">←</button><div class="logo">JL<span>M</span></div><button class="dark-btn" onclick="toggleDark()">🌙</button></div>
+  <div class="hero"><h1>📱 Airtime & Data</h1><div class="breadcrumb">Home → Airtime & Data</div></div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:30px;">
+    <div class="content">
+      <div class="tabs">
+        <div class="tab active" onclick="switchAirtime(this,'airtime-t')">📞 Airtime</div>
+        <div class="tab" onclick="switchAirtime(this,'data-t')">📶 Data</div>
+      </div>
+      <div id="airtime-t" class="card">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px;">
+          <div onclick="showToast('MTN selected ✅')" style="background:#FFD700;border-radius:9px;padding:10px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:900;">MTN</div>
+          <div onclick="showToast('Airtel selected ✅')" style="background:#FF2400;color:#fff;border-radius:9px;padding:10px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:900;">Airtel</div>
+          <div onclick="showToast('Glo selected ✅')" style="background:#006B00;color:#fff;border-radius:9px;padding:10px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:900;">Glo</div>
+          <div onclick="showToast('9mobile selected ✅')" style="background:#006400;color:#fff;border-radius:9px;padding:10px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:900;">9mobile</div>
+        </div>
+        <div class="form-group"><label class="form-label">Phone Number <span>*</span></label><input class="form-input" type="tel" placeholder="08012345678"></div>
+        <div class="amount-grid">
+          <div class="amount-chip" onclick="pickAmount(this,100)">₦100</div>
+          <div class="amount-chip" onclick="pickAmount(this,200)">₦200</div>
+          <div class="amount-chip" onclick="pickAmount(this,500)">₦500</div>
+          <div class="amount-chip" onclick="pickAmount(this,1000)">₦1,000</div>
+          <div class="amount-chip" onclick="pickAmount(this,2000)">₦2,000</div>
+          <div class="amount-chip" onclick="pickAmount(this,5000)">₦5,000</div>
+        </div>
+        <button class="btn-primary" onclick="showToast('📞 Airtime purchased!')">Buy Airtime</button>
+      </div>
+      <div id="data-t" class="card" style="display:none;">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px;">
+          <div style="background:#FFD700;border-radius:9px;padding:10px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:900;">MTN</div>
+          <div style="background:#FF2400;color:#fff;border-radius:9px;padding:10px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:900;">Airtel</div>
+          <div style="background:#006B00;color:#fff;border-radius:9px;padding:10px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:900;">Glo</div>
+          <div style="background:#006400;color:#fff;border-radius:9px;padding:10px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:900;">9mobile</div>
+        </div>
+        <div class="form-group"><label class="form-label">Phone Number <span>*</span></label><input class="form-input" type="tel" placeholder="08012345678"></div>
+        <div class="form-group"><label class="form-label">Select Bundle</label><select class="form-input"><option>500MB — ₦200</option><option>1GB — ₦350</option><option>2GB — ₦600</option><option>5GB — ₦1,500</option><option>10GB — ₦2,500</option><option>Unlimited — ₦8,000</option></select></div>
+        <button class="btn-primary" onclick="showToast('📶 Data bundle purchased!')">Buy Data</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SMS ====== -->
+<div class="screen" id="screen-sms">
+  <div class="topnav"><button class="icon-btn" onclick="nav('dashboard')">←</button><div class="logo">JL<span>M</span></div><button class="dark-btn" onclick="toggleDark()">🌙</button></div>
+  <div class="hero"><h1>📱 SMS Verification</h1><div class="breadcrumb">Home → SMS Verification</div></div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:30px;">
+    <div class="content">
+      <!-- TABS -->
+      <div style="display:flex;background:var(--bg);border-radius:12px;padding:4px;margin-bottom:16px;gap:4px;">
+        <div id="sms-tab-virtual" onclick="switchSMSTab('virtual')" style="flex:1;text-align:center;padding:10px;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer;background:var(--red);color:#fff;font-family:'Outfit',sans-serif;">Virtual Numbers</div>
+        <div id="sms-tab-rental" onclick="switchSMSTab('rental')" style="flex:1;text-align:center;padding:10px;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer;color:var(--text2);font-family:'Outfit',sans-serif;">Rentals</div>
+      </div>
+
+      <!-- VIRTUAL NUMBERS TAB -->
+      <div id="sms-virtual">
+        <!-- ORDER CARD -->
+        <div class="card" style="margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:800;">Place an Order</div>
+            <div onclick="nav('orders')" style="color:var(--red);font-size:13px;font-weight:700;cursor:pointer;">History →</div>
+          </div>
+          <!-- Prime / Alternate -->
+          <div style="display:flex;background:var(--bg);border-radius:10px;padding:3px;margin-bottom:16px;">
+            <div id="sms-prime" onclick="selectSMSType('prime')" style="flex:1;text-align:center;padding:9px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;background:var(--red);color:#fff;font-family:'Outfit',sans-serif;">Prime</div>
+            <div id="sms-alternate" onclick="selectSMSType('alternate')" style="flex:1;text-align:center;padding:9px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;color:var(--text2);font-family:'Outfit',sans-serif;">Alternate</div>
+          </div>
+          <!-- Country -->
+          <div class="form-group">
+            <label class="form-label">Country</label>
+            <select class="form-input" id="smsCountry" onchange="updateSMSPrice()">
+              <option value="">Select a country</option>
+              <option value="US|500">🇺🇸 United States</option>
+              <option value="UK|600">🇬🇧 United Kingdom</option>
+              <option value="CA|550">🇨🇦 Canada</option>
+              <option value="NG|200">🇳🇬 Nigeria</option>
+              <option value="DE|700">🇩🇪 Germany</option>
+              <option value="FR|700">🇫🇷 France</option>
+              <option value="IN|300">🇮🇳 India</option>
+              <option value="BR|400">🇧🇷 Brazil</option>
+              <option value="RU|350">🇷🇺 Russia</option>
+              <option value="CN|400">🇨🇳 China</option>
+              <option value="AU|600">🇦🇺 Australia</option>
+              <option value="JP|800">🇯🇵 Japan</option>
+              <option value="MX|350">🇲🇽 Mexico</option>
+              <option value="SE|650">🇸🇪 Sweden</option>
+              <option value="PH|300">🇵🇭 Philippines</option>
+              <option value="ID|300">🇮🇩 Indonesia</option>
+              <option value="PK|280">🇵🇰 Pakistan</option>
+              <option value="GH|250">🇬🇭 Ghana</option>
+              <option value="KE|280">🇰🇪 Kenya</option>
+              <option value="ZA|350">🇿🇦 South Africa</option>
+            </select>
+          </div>
+          <!-- Service -->
+          <div class="form-group">
+            <label class="form-label">Service</label>
+            <select class="form-input" id="smsService" onchange="updateSMSPrice()">
+              <option value="">Select a service</option>
+              <option value="WhatsApp|+50">WhatsApp</option>
+              <option value="Telegram|+50">Telegram</option>
+              <option value="Facebook|+100">Facebook</option>
+              <option value="Instagram|+100">Instagram</option>
+              <option value="TikTok|+80">TikTok</option>
+              <option value="Twitter|+80">Twitter / X</option>
+              <option value="Google|+150">Google</option>
+              <option value="Snapchat|+80">Snapchat</option>
+              <option value="Uber|+100">Uber</option>
+              <option value="Microsoft|+120">Microsoft</option>
+              <option value="Amazon|+120">Amazon</option>
+              <option value="PayPal|+150">PayPal</option>
+              <option value="Tinder|+100">Tinder</option>
+              <option value="Airbnb|+100">Airbnb</option>
+              <option value="Any|+0">Any Service</option>
+            </select>
+          </div>
+          <!-- Price & Stock -->
+          <div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:12px;color:var(--text2);">Payable Amount</span>
+              <span style="font-size:14px;font-weight:900;font-family:'Outfit',sans-serif;color:var(--red);" id="smsPrice">₦0.00</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;">
+              <span style="font-size:12px;color:var(--text2);">Available Stock</span>
+              <span style="font-size:13px;font-weight:700;" id="smsStock">—</span>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <span style="font-size:12px;color:var(--text2);">Wallet Balance</span>
+            <span style="font-size:13px;font-weight:800;color:var(--green);">₦<span id="smsWalletBal">0.00</span></span>
+          </div>
+          <button class="btn-primary" onclick="placeNumberOrder()" id="smsOrderBtn">Place Order</button>
+        </div>
+
+        <!-- NUMBER RESULT -->
+        <div id="smsNumberResult" style="display:none;" class="card">
+          <div style="color:var(--green);font-weight:900;font-family:'Outfit',sans-serif;font-size:15px;margin-bottom:10px;">✅ Number Assigned!</div>
+          <div style="font-family:'Outfit',sans-serif;font-size:24px;font-weight:900;margin-bottom:6px;" id="smsAssignedNumber">+1 (555) 047-2891</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px;" id="smsNumberService">Service: —</div>
+          <div style="font-size:11px;color:var(--orange);margin-bottom:14px;">⏱ Expires in 20 minutes · Waiting for SMS...</div>
+          <button onclick="copySMSNumber()" style="width:100%;background:var(--navy);color:#fff;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Outfit',sans-serif;">📋 Copy Number</button>
+        </div>
+      </div>
+
+      <!-- RENTALS TAB -->
+      <div id="sms-rental" style="display:none;">
+        <div class="card" style="margin-bottom:14px;">
+          <div style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:800;margin-bottom:14px;">📅 Rent a Number</div>
+          <div class="form-group">
+            <label class="form-label">Country</label>
+            <select class="form-input">
+              <option>🇺🇸 United States</option>
+              <option>🇬🇧 United Kingdom</option>
+              <option>🇳🇬 Nigeria</option>
+              <option>🇩🇪 Germany</option>
+              <option>🇨🇦 Canada</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rental Duration</label>
+            <select class="form-input">
+              <option>1 Day — ₦1,500</option>
+              <option>3 Days — ₦3,500</option>
+              <option>7 Days — ₦7,000</option>
+              <option>30 Days — ₦25,000</option>
+            </select>
+          </div>
+          <div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;">
+              <span style="font-size:12px;color:var(--text2);">Rental Price</span>
+              <span style="font-size:14px;font-weight:900;color:var(--red);">₦1,500</span>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="showToast('📅 Contact support to rent a number!')">Rent Number</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== CONTACT ====== -->
+<div class="screen" id="screen-contact">
+  <div class="topnav"><button class="icon-btn" onclick="nav('dashboard')">←</button><div class="logo">JL<span>M</span></div><button class="dark-btn" onclick="toggleDark()">🌙</button></div>
+  <div class="hero"><h1>💬 Contact Us</h1><div class="breadcrumb">Home → Contact</div></div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:30px;">
+    <div class="content">
+      <div class="card" style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:38px;margin-bottom:7px;">✈️</div>
+        <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:15px;margin-bottom:4px;">Telegram Channel</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:12px;">Updates, deals & announcements</div>
+        <button class="btn-primary" style="background:#0088cc;" onclick="showToast('Opening Telegram...')">Join Telegram</button>
+      </div>
+      <div class="card" style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:38px;margin-bottom:7px;">💬</div>
+        <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:15px;margin-bottom:4px;">WhatsApp Support</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:12px;">Direct support from the owner</div>
+        <button class="btn-primary" style="background:#25D366;" onclick="showToast('Opening WhatsApp...')">Chat on WhatsApp</button>
+      </div>
+      <div class="card">
+        <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:14px;margin-bottom:13px;">🎫 Submit Support Ticket</div>
+        <div class="form-group"><label class="form-label">Subject <span>*</span></label><input class="form-input" id="ticketSubject" placeholder="What's your issue?"></div>
+        <div class="form-group"><label class="form-label">Message <span>*</span></label><textarea class="form-input" id="ticketMsg" rows="4" placeholder="Describe your issue..."></textarea></div>
+        <button class="btn-primary" onclick="submitTicket()">Submit Ticket</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SETTINGS ====== -->
+<div class="screen" id="screen-settings">
+  <div class="topnav"><button class="icon-btn" onclick="openDrawer()">☰</button><div class="logo">JL<span>M</span></div><button class="dark-btn" onclick="toggleDark()">🌙</button></div>
+  <div class="hero"><h1>⚙️ Settings</h1><div class="breadcrumb">Home → Settings</div></div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:70px;">
+    <div class="content">
+      <div class="card" style="margin-bottom:13px;">
+        <div style="font-family:'Outfit',sans-serif;font-weight:800;margin-bottom:12px;">🎨 Appearance</div>
+        <div class="settings-item" style="border:none;">
+          <div class="settings-label">Dark Mode</div>
+          <div class="toggle" id="darkToggle" onclick="toggleDark()"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:13px;">
+        <div style="font-family:'Outfit',sans-serif;font-weight:800;margin-bottom:12px;">👤 Update Profile</div>
+        <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="settingsName" placeholder="Full name"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="settingsPhone" placeholder="Phone number"></div>
+        <div class="form-group"><label class="form-label">Country</label><input class="form-input" id="settingsCountry" placeholder="Country"></div>
+        <button class="btn-primary" onclick="updateProfile()">Save Changes</button>
+      </div>
+      <div class="card">
+        <div style="font-family:'Outfit',sans-serif;font-weight:800;margin-bottom:12px;">🔒 Change Password</div>
+        <div class="form-group"><label class="form-label">New Password <span>*</span></label><input class="form-input" type="password" id="newPass" placeholder="Enter new password"></div>
+        <div class="form-group"><label class="form-label">Confirm Password <span>*</span></label><input class="form-input" type="password" id="confirmPass" placeholder="Repeat new password"></div>
+        <button class="btn-primary" onclick="changePassword()">Update Password</button>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="bnav-item" onclick="nav('dashboard')"><span class="bicon">🏠</span>Home</div>
+    <div class="bnav-item" onclick="nav('products')"><span class="bicon">🛍️</span>Products</div>
+    <div class="bnav-item" onclick="nav('deposit')"><span class="bicon">💳</span>Deposit</div>
+    <div class="bnav-item" onclick="nav('orders')"><span class="bicon">📦</span>Orders</div>
+    <div class="bnav-item active" onclick="nav('settings')"><span class="bicon">⚙️</span>Settings</div>
+  </div>
+</div>
+
+<!-- ====== PROFILE ====== -->
+<div class="screen" id="screen-profile">
+  <div class="topnav"><button class="icon-btn" onclick="nav('dashboard')">←</button><div class="logo">JL<span>M</span></div><button class="dark-btn" onclick="toggleDark()">🌙</button></div>
+  <div class="hero"><h1>👤 My Profile</h1><div class="breadcrumb">Home → Profile</div></div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:30px;">
+    <div class="content">
+      <div class="card" style="text-align:center;margin-bottom:13px;">
+        <div class="avatar" id="profileAvatar">?</div>
+        <div style="font-family:'Outfit',sans-serif;font-size:19px;font-weight:900;" id="profileName">Loading...</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:3px;" id="profileEmail"></div>
+        <div style="margin-top:9px;"><span class="badge badge-green">✅ Active</span></div>
+      </div>
+      <div class="card">
+        <div class="settings-item"><div class="settings-label">Username</div><div class="settings-value" id="profileUsername">-</div></div>
+        <div class="settings-item"><div class="settings-label">Phone</div><div class="settings-value" id="profilePhone">-</div></div>
+        <div class="settings-item"><div class="settings-label">Country</div><div class="settings-value" id="profileCountry">Nigeria</div></div>
+        <div class="settings-item"><div class="settings-label">Wallet</div><div class="settings-value" id="profileBalance">₦0.00</div></div>
+        <div class="settings-item" style="border:none;"><div class="settings-label">Member Since</div><div class="settings-value" id="profileDate">-</div></div>
+      </div>
+      <button class="btn-primary" onclick="nav('settings')">✏️ Edit Profile</button>
+      <button class="btn-outline" onclick="logout()">🚪 Logout</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script>
+const PAYSTACK_PUBLIC_KEY = 'pk_live_547e532271f09eebb7e1f3abe5d1fe36fdcae930';
+// =============================================
+// SUPABASE SETUP
+// =============================================
+const SUPABASE_URL = 'https://fscuvwqxyctactcpazvw.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzY3V2d3F4eWN0YWN0Y3BhenZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MDQ2NzIsImV4cCI6MjA5NDk4MDY3Mn0.xzpurW3kOCJV_cZdg2quIvh8ddz6pgdXbmc_4ffmZPA';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false
+  },
+  global: {
+    fetch: (url, options = {}) => {
+      return fetch(url, { ...options, signal: AbortSignal.timeout(30000) });
+    }
+  }
+});
+
+// =============================================
+// STATE
+// =============================================
+let currentUser = null;
+let currentProfile = null;
+let isDark = false;
+let payAmount = 0;
+let allOrders = [];
+let allProducts = [];
+
+// =============================================
+// INIT
+// =============================================
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      currentUser = session.user;
+      nav('dashboard');
+      loadProfile().catch(console.error);
+    } else {
+      nav('login');
+    }
+  } catch(e) {
+    nav('login');
+  }
+});
+
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    currentUser = session.user;
+    loadProfile().catch(console.error);
+  } else if (event === 'SIGNED_OUT') {
+    currentUser = null;
+    currentProfile = null;
+    nav('login');
+  }
+});
+
+// =============================================
+// NAVIGATION
+// =============================================
+function nav(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-' + screen);
+  if (el) { el.classList.add('active'); window.scrollTo(0,0); }
+  // Load data for specific screens
+  if (screen === 'dashboard') loadDashboard();
+  if (screen === 'products') loadProducts();
+  if (screen === 'orders') loadOrders('all');
+  if (screen === 'deposit') loadDeposits();
+  if (screen === 'payments') loadPayments();
+  if (screen === 'profile') loadProfilePage();
+  if (screen === 'settings') loadSettings();
+}
+
+// =============================================
+// AUTH
+// =============================================
+async function login() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  if (!email || !pass) { showToast('⚠️ Fill in all fields'); return; }
+  const btn = document.getElementById('loginBtn');
+  btn.innerHTML = '<span class="loader"></span>Logging in...';
+  btn.disabled = true;
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) { showToast('❌ ' + error.message); btn.innerHTML = 'Login'; btn.disabled = false; return; }
+    currentUser = data.user;
+    showToast('✅ Welcome back!');
+    nav('dashboard');
+    loadProfile().catch(console.error);
+  } catch(err) {
+    showToast('❌ ' + (err.message || 'Login failed. Try again.'));
+  }
+  btn.innerHTML = 'Login'; btn.disabled = false;
+}
+
+async function register() {
+  const name = document.getElementById('regName').value.trim();
+  const username = document.getElementById('regUsername').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const phone = document.getElementById('regPhone').value.trim();
+  const pass = document.getElementById('regPass').value;
+  const terms = document.getElementById('regTerms').checked;
+  if (!name || !username || !email || !phone || !pass) { showToast('⚠️ Fill in all fields'); return; }
+  if (!terms) { showToast('⚠️ Accept terms & conditions'); return; }
+  if (pass.length < 6) { showToast('⚠️ Password must be at least 6 characters'); return; }
+  const btn = document.getElementById('regBtn');
+  btn.innerHTML = '<span class="loader"></span>Creating account...';
+  btn.disabled = true;
+  try {
+    const { data, error } = await sb.auth.signUp({
+      email, password: pass,
+      options: { data: { full_name: name, username, phone } }
+    });
+    if (error) { showToast('❌ ' + error.message); btn.innerHTML = 'Create Account'; btn.disabled = false; return; }
+    if (data.user) {
+      currentUser = data.user;
+      // Create profile immediately
+      await sb.from('profiles').upsert({
+        id: data.user.id,
+        full_name: name,
+        username: username,
+        phone: phone,
+        country: 'Nigeria',
+        wallet_balance: 0,
+        role: 'user'
+      });
+      currentProfile = { full_name: name, username, phone, country: 'Nigeria', wallet_balance: 0 };
+      showToast('🎉 Welcome to JLM!');
+      nav('dashboard');
+      updateDrawer();
+    }
+  } catch(err) {
+    showToast('❌ ' + (err.message || 'Registration failed. Try again.'));
+  }
+  btn.innerHTML = 'Create Account'; btn.disabled = false;
+}
+
+async function resetPassword() {
+  const email = document.getElementById('forgotEmail').value.trim();
+  if (!email) { showToast('⚠️ Enter your email'); return; }
+  const { error } = await sb.auth.resetPasswordForEmail(email);
+  if (error) { showToast('❌ ' + error.message); return; }
+  showToast('📧 Reset link sent! Check your email');
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  showToast('👋 Logged out');
+  nav('login');
+}
+
+// =============================================
+// PROFILE
+// =============================================
+async function loadProfile() {
+  if (!currentUser) return;
+  try {
+    const { data, error } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+    if (data) {
+      currentProfile = data;
+      updateDrawer();
+      // Update all balance displays immediately
+      const balStr = '₦' + (data.wallet_balance||0).toLocaleString('en-NG', {minimumFractionDigits:2});
+      const els = ['dashBalance','depositBalance','paymentsBalance','profileBalance'];
+      els.forEach(id => { const el = document.getElementById(id); if(el) el.textContent = balStr; });
+      // Update name
+      const nameEl = document.getElementById('dashName');
+      if(nameEl) nameEl.textContent = (data.full_name||'User').split(' ')[0];
+    }
+  } catch(e) { console.error('Profile load error:', e); }
+}
+
+function updateDrawer() {
+  if (!currentProfile) return;
+  const initials = (currentProfile.full_name || 'U').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('drawerAvatar').textContent = initials;
+  document.getElementById('drawerName').textContent = currentProfile.full_name || 'User';
+  document.getElementById('drawerEmail').textContent = currentUser?.email || '';
+  document.getElementById('drawerBalance').textContent = '₦' + (currentProfile.wallet_balance || 0).toLocaleString('en-NG', {minimumFractionDigits:2});
+}
+
+// =============================================
+// DASHBOARD
+// =============================================
+async function loadDashboard() {
+  await loadProfile();
+  if (!currentProfile) return;
+  document.getElementById('dashName').textContent = (currentProfile.full_name || 'User').split(' ')[0];
+  document.getElementById('dashBalance').textContent = '₦' + (currentProfile.wallet_balance||0).toLocaleString('en-NG', {minimumFractionDigits:2});
+  // Orders count
+  const { data: orders } = await sb.from('orders').select('*').eq('user_id', currentUser.id);
+  if (orders) {
+    allOrders = orders;
+    document.getElementById('dashOrders').textContent = orders.length;
+    document.getElementById('dashPending').textContent = orders.filter(o=>o.status==='pending').length;
+    // Recent 3
+    const recent = orders.slice(-3).reverse();
+    document.getElementById('dashRecentOrders').innerHTML = recent.length ? recent.map(o => `
+      <div class="order-row">
+        <div class="order-top"><div class="order-name">${o.product_name}</div><span class="badge ${badgeClass(o.status)}">${o.status}</span></div>
+        <div class="order-detail"><span>Qty: ${o.quantity}</span><span>₦${Number(o.total_amount).toLocaleString()}</span><span>${fmtDate(o.created_at)}</span></div>
+      </div>`).join('') : '<div style="text-align:center;color:var(--text2);font-size:12px;padding:16px;">No orders yet</div>';
+  }
+  // Deposits total
+  const { data: deps } = await sb.from('deposits').select('amount').eq('user_id', currentUser.id).eq('status','confirmed');
+  if (deps) {
+    const total = deps.reduce((s,d)=>s+Number(d.amount),0);
+    document.getElementById('dashDeposits').textContent = total >= 1000 ? '₦'+Math.round(total/1000)+'k' : '₦'+total;
+  }
+}
+
+// =============================================
+// PRODUCTS
+// =============================================
+async function loadProducts() {
+  const { data, error } = await sb.from('products').select('*').eq('is_active', true).order('created_at');
+  if (error || !data) { document.getElementById('productsList').innerHTML = '<div style="text-align:center;color:var(--text2);padding:30px;">Failed to load products</div>'; return; }
+  allProducts = data;
+  // Build category filters
+  const cats = ['All', ...new Set(data.map(p=>p.category))];
+  document.getElementById('catFilters').innerHTML = cats.map((c,i) =>
+    `<span onclick="filterProducts(this,'${c}')" style="display:inline-block;background:${i===0?'var(--red)':'var(--card)'};color:${i===0?'#fff':'var(--text)'};border:1px solid ${i===0?'var(--red)':'var(--border)'};padding:6px 13px;border-radius:20px;font-size:11px;font-weight:800;margin-right:7px;cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap;">${c}</span>`
+  ).join('');
+  renderProducts(data);
+}
+
+function filterProducts(el, cat) {
+  document.querySelectorAll('#catFilters span').forEach(s => { s.style.background='var(--card)'; s.style.color='var(--text)'; s.style.borderColor='var(--border)'; });
+  el.style.background='var(--red)'; el.style.color='#fff'; el.style.borderColor='var(--red)';
+  const filtered = cat === 'All' ? allProducts : allProducts.filter(p=>p.category===cat);
+  renderProducts(filtered);
+}
+
+function renderProducts(products) {
+  const icons = {
+    Facebook: `<svg width="24" height="24" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`,
+    Instagram: `<svg width="24" height="24" viewBox="0 0 24 24" fill="url(#igGrad)"><defs><radialGradient id="igGrad" cx="30%" cy="100%" r="120%"><stop offset="0%" stop-color="#fdf497"/><stop offset="5%" stop-color="#fdf497"/><stop offset="45%" stop-color="#fd5949"/><stop offset="60%" stop-color="#d6249f"/><stop offset="90%" stop-color="#285AEB"/></radialGradient></defs><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>`,
+    TikTok: `<svg width="24" height="24" viewBox="0 0 24 24" fill="#000"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.28 8.28 0 004.84 1.54V6.78a4.85 4.85 0 01-1.07-.09z"/></svg>`,
+    Twitter: `<svg width="24" height="24" viewBox="0 0 24 24" fill="#000"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.631 5.905-5.631zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
+    Snapchat: `<svg width="24" height="24" viewBox="0 0 24 24" fill="#FFFC00"><path d="M12.166 2c.85 0 3.72.24 5.07 3.3.44 1.01.33 2.72.25 3.96l-.02.3c.3-.07.6-.18.86-.34.3-.18.62-.26.9-.21.5.1.83.56.79 1.05-.04.43-.34.79-.8.97-.07.03-.97.33-2.06.48-.63 1.17-1.96 3.08-4.52 3.72.1.05.2.12.29.2.68.57 1.65.82 2.88.74.56-.04 1.05.03 1.5.2.98.38 1.52 1.21 1.52 1.97 0 .66-.38 1.06-.94 1.06-.24 0-.5-.06-.79-.18-.67-.28-1.37-.4-2.1-.36-.47.03-.9.12-1.28.28-.73.3-1.35.9-1.93 1.83-.17.27-.4.41-.66.41-.17 0-.34-.05-.5-.14C9.6 19.1 8.2 18.5 6.47 18.5c-.73 0-1.43.12-2.1.36-.29.12-.55.18-.79.18-.56 0-.94-.4-.94-1.06 0-.76.54-1.59 1.52-1.97.45-.17.94-.24 1.5-.2 1.23.08 2.2-.17 2.88-.74.09-.08.19-.15.29-.2-2.56-.64-3.89-2.55-4.52-3.72-1.09-.15-1.99-.45-2.06-.48-.46-.18-.76-.54-.8-.97-.04-.49.29-.95.79-1.05.28-.05.6.03.9.21.26.16.56.27.86.34l-.02-.3c-.08-1.24-.19-2.95.25-3.96C4.48 2.24 7.32 2 8.17 2h3.996z"/></svg>`,
+    VPN: `🔒`,
+    SMS: `💬`
+  };
+  const bgs = {
+    Facebook:'#E8F0FE', Instagram:'#FFF0F5', TikTok:'#F0F0F0',
+    Twitter:'#E8F4FD', Snapchat:'#FFFDE8', VPN:'#E8F8E8', SMS:'#F0FFF0'
+  };
+  document.getElementById('productsList').innerHTML = products.length ? products.map(p => `
+    <div class="prod-card">
+      <div class="prod-icon" style="background:${bgs[p.category]||'#F5F5F5'}">${typeof icons[p.category] === 'string' && icons[p.category].startsWith('<') ? icons[p.category] : `<span style="font-size:22px;">${icons[p.category]||'🛍️'}</span>`}</div>
+      <div class="prod-info">
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-stock">In Stock: <strong>${p.stock_qty} qty</strong></div>
+        <div class="prod-price">₦${Number(p.price).toLocaleString()}/qty</div>
+      </div>
+      <button class="buy-btn" onclick="buyProduct('${p.id}','${p.name}',${p.price},${p.stock_qty})" ${p.stock_qty>0?'':'disabled style="opacity:0.5;"'}>${p.stock_qty>0?'Buy':'Out'}</button>
+    </div>`).join('') : '<div style="text-align:center;color:var(--text2);padding:30px;">No products in this category</div>';
+}
+
+async function buyProduct(id, name, price, stock) {
+  if (!currentProfile) { showToast('⚠️ Please login first'); return; }
+  if (stock <= 0) { showToast('❌ Out of stock'); return; }
+  if (currentProfile.wallet_balance < price) { showToast('❌ Insufficient balance. Please deposit funds'); nav('deposit'); return; }
+  if (!confirm(`Buy 1x ${name} for ₦${Number(price).toLocaleString()}?`)) return;
+  // Get available account item
+  const { data: accountItem } = await sb.from('account_items').select('*').eq('product_id', id).eq('is_sold', false).limit(1).single();
+  if (!accountItem) { showToast('❌ No account available. Contact support.'); return; }
+  // Deduct wallet
+  const newBal = Number(currentProfile.wallet_balance) - Number(price);
+  const { error: we } = await sb.from('profiles').update({ wallet_balance: newBal }).eq('id', currentUser.id);
+  if (we) { showToast('❌ Purchase failed: ' + we.message); return; }
+  // Mark account as sold
+  await sb.from('account_items').update({ is_sold: true, sold_to: currentUser.id, sold_at: new Date().toISOString() }).eq('id', accountItem.id);
+  // Create order with account details saved
+  const details = `Email: ${accountItem.login_email||'N/A'} | Password: ${accountItem.login_password||'N/A'} | Recovery: ${accountItem.recovery_email||accountItem.recovery_phone||'N/A'} | Info: ${accountItem.extra_info||'N/A'}`;
+  await sb.from('orders').insert({ user_id: currentUser.id, product_id: id, product_name: name, quantity: 1, unit_price: price, total_amount: price, status: 'completed', notes: details });
+  // Update stock
+  await sb.from('products').update({ stock_qty: stock - 1 }).eq('id', id);
+  currentProfile.wallet_balance = newBal;
+  updateDrawer();
+  // Show copyable details
+  showAccountDetails(name, price, accountItem);
+  loadProducts();
+  loadDashboard();
+}
+
+function showAccountDetails(name, price, item) {
+  // Remove existing modal if any
+  const existing = document.getElementById('accountModal');
+  if (existing) existing.remove();
+  const details = `${item.login_email||'N/A'}:${item.login_password||'N/A'}`;
+  const fullDetails = `Product: ${name}
+Email: ${item.login_email||'N/A'}
+Password: ${item.login_password||'N/A'}
+Recovery: ${item.recovery_email||item.recovery_phone||'N/A'}
+Info: ${item.extra_info||'N/A'}`;
+  const modal = document.createElement('div');
+  modal.id = 'accountModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:flex-end;';
+  modal.innerHTML = `
+    <div style="background:var(--card);border-radius:20px 20px 0 0;padding:24px 18px 40px;width:100%;max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div style="font-family:'Outfit',sans-serif;font-size:18px;font-weight:900;color:var(--green);">✅ Purchase Successful!</div>
+        <button onclick="document.getElementById('accountModal').remove()" style="background:var(--red);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;">×</button>
+      </div>
+      <div style="background:var(--bg);border-radius:12px;padding:16px;margin-bottom:14px;border:2px solid var(--green);">
+        <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:13px;margin-bottom:12px;color:var(--text);">🔑 Your Account Details</div>
+        <div style="margin-bottom:10px;">
+          <div style="font-size:10px;color:var(--text2);margin-bottom:3px;">EMAIL</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;background:var(--card);border-radius:8px;padding:10px 12px;border:1px solid var(--border);">
+            <span style="font-size:13px;font-weight:700;" id="acEmail">${item.login_email||'N/A'}</span>
+            <button onclick="copyText('acEmail')" style="background:var(--red);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;">Copy</button>
+          </div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div style="font-size:10px;color:var(--text2);margin-bottom:3px;">PASSWORD</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;background:var(--card);border-radius:8px;padding:10px 12px;border:1px solid var(--border);">
+            <span style="font-size:13px;font-weight:700;" id="acPass">${item.login_password||'N/A'}</span>
+            <button onclick="copyText('acPass')" style="background:var(--red);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;">Copy</button>
+          </div>
+        </div>
+        ${item.recovery_email||item.recovery_phone ? `
+        <div style="margin-bottom:10px;">
+          <div style="font-size:10px;color:var(--text2);margin-bottom:3px;">RECOVERY</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;background:var(--card);border-radius:8px;padding:10px 12px;border:1px solid var(--border);">
+            <span style="font-size:13px;font-weight:700;" id="acRec">${item.recovery_email||item.recovery_phone}</span>
+            <button onclick="copyText('acRec')" style="background:var(--red);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;">Copy</button>
+          </div>
+        </div>` : ''}
+        ${item.extra_info ? `
+        <div style="margin-bottom:10px;">
+          <div style="font-size:10px;color:var(--text2);margin-bottom:3px;">INFO</div>
+          <div style="background:var(--card);border-radius:8px;padding:10px 12px;border:1px solid var(--border);">
+            <span style="font-size:12px;" id="acInfo">${item.extra_info}</span>
+          </div>
+        </div>` : ''}
+      </div>
+      <button onclick="copyAllDetails('${fullDetails.replace(/'/g, '&apos;')}')" style="width:100%;background:var(--navy);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Outfit',sans-serif;margin-bottom:10px;">📋 Copy All Details</button>
+      <div style="font-size:11px;color:var(--text2);text-align:center;">⚠️ Save these details! You can also find them in Orders history.</div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function copyText(elementId) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => showToast('✅ Copied!')).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = el.textContent;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('✅ Copied!');
+  });
+}
+
+function copyAllDetails(details) {
+  const decoded = details.replace(/&apos;/g, "'");
+  navigator.clipboard.writeText(decoded).then(() => showToast('✅ All details copied!')).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = decoded;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('✅ All details copied!');
+  });
+}
+
+// =============================================
+// ORDERS
+// =============================================
+async function loadOrders(filter) {
+  const { data, error } = await sb.from('orders').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+  if (error) { document.getElementById('ordersList').innerHTML = '<div style="text-align:center;color:var(--text2);">Failed to load</div>'; return; }
+  allOrders = data || [];
+  renderOrders(filter);
+}
+
+function filterOrders(el, type) {
+  document.querySelectorAll('#screen-orders .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderOrders(type);
+}
+
+function renderOrders(filter) {
+  const filtered = filter === 'all' ? allOrders : allOrders.filter(o=>o.status===filter);
+  document.getElementById('ordersList').innerHTML = filtered.length ? filtered.map(o=>`
+    <div class="order-row">
+      <div class="order-top"><div class="order-name">${o.product_name}</div><span class="badge ${badgeClass(o.status)}">${o.status}</span></div>
+      <div class="order-detail"><span>₦${Number(o.total_amount).toLocaleString()}</span><span>${fmtDate(o.created_at)}</span></div>
+      ${o.notes ? `
+      <div style="margin-top:10px;background:var(--bg);border-radius:8px;padding:10px;border:1px solid var(--border);">
+        <div style="font-size:10px;font-weight:800;color:var(--text2);margin-bottom:6px;">🔑 ACCOUNT DETAILS</div>
+        ${o.notes.split(' | ').map(detail => {
+          const parts = detail.split(': ');
+          const label = parts[0];
+          const value = parts.slice(1).join(': ');
+          return value && value !== 'N/A' ? `
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+            <div>
+              <div style="font-size:9px;color:var(--text2);">${label.toUpperCase()}</div>
+              <div style="font-size:12px;font-weight:700;" id="ord-${o.id}-${label.replace(/\s/g,'')}">${value}</div>
+            </div>
+            <button onclick="copyText('ord-${o.id}-${label.replace(/\s/g,'')}')" style="background:var(--red);color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;flex-shrink:0;">Copy</button>
+          </div>` : '';
+        }).join('')}
+        <button onclick="copyAllDetails('${o.notes.replace(/'/g,"&apos;")}')" style="width:100%;background:var(--navy);color:#fff;border:none;border-radius:7px;padding:8px;font-size:11px;font-weight:700;cursor:pointer;margin-top:6px;font-family:'Outfit',sans-serif;">📋 Copy All</button>
+      </div>` : ''}
+    </div>`).join('') : '<div style="text-align:center;color:var(--text2);font-size:12px;padding:30px;">No orders found</div>';
+}
+
+// =============================================
+// DEPOSIT
+// =============================================
+async function loadDeposits() {
+  if (!currentProfile) await loadProfile();
+  document.getElementById('depositBalance').textContent = '₦' + (currentProfile?.wallet_balance||0).toLocaleString('en-NG',{minimumFractionDigits:2});
+  const { data } = await sb.from('deposits').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+  document.getElementById('depositHistory').innerHTML = (data && data.length) ? data.map(d=>`
+    <div class="order-row">
+      <div class="order-top"><div class="order-name">${d.paystack_ref||'Deposit'}</div><span class="badge ${d.status==='confirmed'?'badge-green':d.status==='pending'?'badge-orange':'badge-red2'}">${d.status}</span></div>
+      <div class="order-detail"><span>${fmtDate(d.created_at)}</span><span>₦${Number(d.amount).toLocaleString()}</span></div>
+    </div>`).join('') : '<div style="text-align:center;color:var(--text2);font-size:12px;padding:12px;">No deposits yet</div>';
+}
+
+async function loadPayments() {
+  if (!currentProfile) await loadProfile();
+  document.getElementById('paymentsBalance').textContent = '₦' + (currentProfile?.wallet_balance||0).toLocaleString('en-NG',{minimumFractionDigits:2});
+  const { data: deps } = await sb.from('deposits').select('*').eq('user_id', currentUser.id).order('created_at',{ascending:false});
+  const { data: ords } = await sb.from('orders').select('*').eq('user_id', currentUser.id).order('created_at',{ascending:false});
+  const all = [
+    ...(deps||[]).map(d=>({...d, type:'deposit'})),
+    ...(ords||[]).map(o=>({...o, type:'order'}))
+  ].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  document.getElementById('paymentsList').innerHTML = all.length ? all.map(t=>`
+    <div class="order-row">
+      <div class="order-top">
+        <div class="order-name">${t.type==='deposit'?'💳 Deposit':`🛍️ ${t.product_name||'Purchase'}`}</div>
+        <span class="badge ${t.type==='deposit'?'badge-green':'badge-red2'}">${t.type==='deposit'?'+':'−'}₦${Number(t.type==='deposit'?t.amount:t.total_amount).toLocaleString()}</span>
+      </div>
+      <div class="order-detail"><span>${fmtDate(t.created_at)}</span><span>${t.status||''}</span></div>
+    </div>`).join('') : '<div style="text-align:center;color:var(--text2);font-size:12px;padding:16px;">No transactions yet</div>';
+}
+
+// =============================================
+// PAYSTACK
+// =============================================
+function pickAmount(el, val) {
+  document.querySelectorAll('.amount-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  payAmount = val;
+  const ca = document.getElementById('customAmt');
+  if (ca) ca.value = '';
+}
+function customAmount(val) {
+  document.querySelectorAll('.amount-chip').forEach(c=>c.classList.remove('selected'));
+  payAmount = parseInt(val)||0;
+}
+function openPaystack() {
+  const amt = payAmount || parseInt(document.getElementById('customAmt')?.value)||0;
+  if (amt < 100) { showToast('⚠️ Minimum deposit is ₦100'); return; }
+  payAmount = amt;
+  document.getElementById('payAmountDisplay').textContent = '₦' + amt.toLocaleString();
+  document.getElementById('bankAmount').textContent = '₦' + amt.toLocaleString();
+  document.getElementById('paystackAmountDisplay').textContent = '₦' + amt.toLocaleString();
+  document.getElementById('paystackModal').classList.add('open');
+}
+function closePaystack() { document.getElementById('paystackModal').classList.remove('open'); }
+
+function selectPayMethod(method) {
+  document.getElementById('pm-bank').classList.remove('sel');
+  document.getElementById('pm-paystack').classList.remove('sel');
+  document.getElementById('pm-bank-check').style.display = 'none';
+  document.getElementById('pm-paystack-check').style.display = 'none';
+  document.getElementById('bankDetails').style.display = 'none';
+  document.getElementById('paystackDetails').style.display = 'none';
+  document.getElementById('pm-' + method).classList.add('sel');
+  document.getElementById('pm-' + method + '-check').style.display = 'inline';
+  document.getElementById(method === 'bank' ? 'bankDetails' : 'paystackDetails').style.display = 'block';
+}
+
+function payWithPaystack() {
+  if (!currentUser) { showToast('⚠️ Please login first'); return; }
+  const email = currentUser.email;
+  const amount = payAmount * 100;
+  const ref = 'JLM-' + Date.now();
+  const btn = document.getElementById('paystackPayBtn');
+  btn.innerHTML = '<span class="loader"></span>Opening...';
+  btn.disabled = true;
+
+  const onSuccess = async function(transaction) {
+    btn.innerHTML = 'Pay Now 💳'; btn.disabled = false;
+    closePaystack();
+    showToast('✅ Payment confirmed! Updating wallet...');
+    try {
+      // Save deposit record
+      await sb.from('deposits').insert({
+        user_id: currentUser.id,
+        amount: payAmount,
+        paystack_ref: transaction.reference,
+        status: 'confirmed'
+      });
+      // Get fresh balance from database
+      const { data: freshProfile } = await sb.from('profiles').select('wallet_balance').eq('id', currentUser.id).single();
+      const currentBal = Number(freshProfile?.wallet_balance || 0);
+      const newBal = currentBal + payAmount;
+      // Update wallet
+      await sb.from('profiles').update({ wallet_balance: newBal }).eq('id', currentUser.id);
+      if (currentProfile) currentProfile.wallet_balance = newBal;
+      // Update all balance displays
+      const balStr = '₦' + newBal.toLocaleString('en-NG', {minimumFractionDigits:2});
+      const depositBalEl = document.getElementById('depositBalance');
+      const dashBalEl = document.getElementById('dashBalance');
+      const paymentsBalEl = document.getElementById('paymentsBalance');
+      if (depositBalEl) depositBalEl.textContent = balStr;
+      if (dashBalEl) dashBalEl.textContent = balStr;
+      if (paymentsBalEl) paymentsBalEl.textContent = balStr;
+      updateDrawer();
+      loadDeposits();
+      showToast('🎉 ₦' + payAmount.toLocaleString() + ' added to your wallet!');
+    } catch(err) {
+      showToast('⚠️ Payment received but wallet update failed. Contact support.');
+    }
+  };
+
+  const onClose = function() {
+    btn.innerHTML = 'Pay Now 💳'; btn.disabled = false;
+    showToast('Payment cancelled');
+  };
+
+  setTimeout(() => {
+    try {
+      const handler = PaystackPop.setup({
+        key: PAYSTACK_PUBLIC_KEY,
+        email: email,
+        amount: amount,
+        currency: 'NGN',
+        ref: ref,
+        onSuccess: onSuccess,
+        onCancel: onClose
+      });
+      handler.openIframe();
+    } catch(e) {
+      btn.innerHTML = 'Pay Now 💳'; btn.disabled = false;
+      showToast('❌ ' + e.message);
+    }
+  }, 300);
+}
+
+function copyAccNum() {
+  navigator.clipboard.writeText('8085256239').then(() => showToast('✅ Account number copied!')).catch(() => showToast('Account: 8085256239'));
+}
+
+function openWhatsApp() {
+  const name = document.getElementById('senderName').value || currentProfile?.username || 'Customer';
+  const msg = `Hello! I just made a deposit of ₦${payAmount.toLocaleString()} to Jumia Log Market.\n\nName/Username: ${name}\nAmount: ₦${payAmount.toLocaleString()}\nBank: Moniepoint\nAccount: 8085256239\n\nPlease credit my wallet. Thank you!`;
+  const url = `https://wa.me/2348085256239?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+}
+
+async function submitBankPayment() {
+  const senderName = document.getElementById('senderName').value.trim();
+  if (!senderName) { showToast('⚠️ Enter your username so we can identify your payment'); return; }
+  const btn = document.getElementById('paidBtn');
+  btn.innerHTML = '<span class="loader"></span>Submitting...'; btn.disabled = true;
+  // Create pending deposit record
+  const ref = 'BANK-' + Date.now();
+  const { error } = await sb.from('deposits').insert({
+    user_id: currentUser.id,
+    amount: payAmount,
+    paystack_ref: ref,
+    status: 'pending'
+  });
+  if (error) { showToast('❌ Failed: ' + error.message); btn.innerHTML='✅ I Have Paid'; btn.disabled=false; return; }
+  closePaystack();
+  showToast('✅ Payment submitted! Your wallet will be credited within 30 minutes.');
+  // Auto open WhatsApp to notify admin
+  setTimeout(() => {
+    const name = senderName;
+    const msg = `🔔 NEW DEPOSIT ALERT!\n\nCustomer: ${name}\nAmount: ₦${payAmount.toLocaleString()}\nRef: ${ref}\n\nPlease verify and credit their wallet on Supabase.`;
+    window.open(`https://wa.me/2348085256239?text=${encodeURIComponent(msg)}`, '_blank');
+  }, 1000);
+  loadDeposits();
+  btn.innerHTML='✅ I Have Paid'; btn.disabled=false;
+}
+
+// =============================================
+// PROFILE PAGE
+// =============================================
+async function loadProfilePage() {
+  if (!currentProfile) await loadProfile();
+  if (!currentProfile) return;
+  const initials = (currentProfile.full_name||'U').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('profileAvatar').textContent = initials;
+  document.getElementById('profileName').textContent = currentProfile.full_name || 'User';
+  document.getElementById('profileEmail').textContent = currentUser?.email || '';
+  document.getElementById('profileUsername').textContent = currentProfile.username || '-';
+  document.getElementById('profilePhone').textContent = currentProfile.phone || '-';
+  document.getElementById('profileCountry').textContent = currentProfile.country || 'Nigeria';
+  document.getElementById('profileBalance').textContent = '₦' + (currentProfile.wallet_balance||0).toLocaleString('en-NG',{minimumFractionDigits:2});
+  document.getElementById('profileDate').textContent = fmtDate(currentProfile.created_at);
+}
+
+function loadSettings() {
+  if (!currentProfile) return;
+  document.getElementById('settingsName').value = currentProfile.full_name || '';
+  document.getElementById('settingsPhone').value = currentProfile.phone || '';
+  document.getElementById('settingsCountry').value = currentProfile.country || 'Nigeria';
+}
+
+async function updateProfile() {
+  const name = document.getElementById('settingsName').value.trim();
+  const phone = document.getElementById('settingsPhone').value.trim();
+  const country = document.getElementById('settingsCountry').value.trim();
+  const { error } = await sb.from('profiles').update({ full_name: name, phone, country }).eq('id', currentUser.id);
+  if (error) { showToast('❌ Update failed'); return; }
+  currentProfile.full_name = name; currentProfile.phone = phone; currentProfile.country = country;
+  updateDrawer();
+  showToast('✅ Profile updated!');
+}
+
+async function changePassword() {
+  const np = document.getElementById('newPass').value;
+  const cp = document.getElementById('confirmPass').value;
+  if (!np || !cp) { showToast('⚠️ Fill in both password fields'); return; }
+  if (np !== cp) { showToast('❌ Passwords do not match'); return; }
+  if (np.length < 6) { showToast('⚠️ Password must be at least 6 characters'); return; }
+  const { error } = await sb.auth.updateUser({ password: np });
+  if (error) { showToast('❌ ' + error.message); return; }
+  showToast('🔒 Password changed!');
+  document.getElementById('newPass').value = '';
+  document.getElementById('confirmPass').value = '';
+}
+
+// =============================================
+// SUPPORT TICKET
+// =============================================
+async function submitTicket() {
+  const subject = document.getElementById('ticketSubject').value.trim();
+  const message = document.getElementById('ticketMsg').value.trim();
+  if (!subject || !message) { showToast('⚠️ Fill in all fields'); return; }
+  const { error } = await sb.from('support_tickets').insert({ user_id: currentUser.id, subject, message });
+  if (error) { showToast('❌ Failed to submit'); return; }
+  document.getElementById('ticketSubject').value = '';
+  document.getElementById('ticketMsg').value = '';
+  showToast('✅ Ticket submitted! We will respond soon.');
+}
+
+// =============================================
+// BILLS / AIRTIME TAB SWITCHING
+// =============================================
+function switchBill(el, id) {
+  document.querySelectorAll('#screen-bills .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['electricity','tv','betting'].forEach(b=>{ const e=document.getElementById('bill-'+b); if(e) e.style.display=b===id?'block':'none'; });
+}
+function switchAirtime(el, id) {
+  document.querySelectorAll('#screen-airtime .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['airtime-t','data-t'].forEach(b=>{ const e=document.getElementById(b); if(e) e.style.display=b===id?'block':'none'; });
+}
+
+// =============================================
+// DARK MODE
+// =============================================
+function toggleDark() {
+  isDark = !isDark;
+  document.body.classList.toggle('dark', isDark);
+  localStorage.setItem('jlm-dark', isDark);
+  const dt = document.getElementById('darkToggle');
+  if (dt) dt.classList.toggle('on', isDark);
+  document.querySelectorAll('.dark-btn').forEach(b=>b.textContent=isDark?'☀️':'🌙');
+}
+if (localStorage.getItem('jlm-dark') === 'true') toggleDark();
+
+// =============================================
+// DRAWER
+// =============================================
+function openDrawer() { document.getElementById('drawer').classList.add('open'); document.getElementById('drawerOverlay').classList.add('open'); }
+function closeDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('drawerOverlay').classList.remove('open'); }
+
+// =============================================
+// SMS
+// =============================================
+// =============================================
+// SMS VERIFICATION
+// =============================================
+function switchSMSTab(tab) {
+  document.getElementById('sms-tab-virtual').style.background = tab === 'virtual' ? 'var(--red)' : 'transparent';
+  document.getElementById('sms-tab-virtual').style.color = tab === 'virtual' ? '#fff' : 'var(--text2)';
+  document.getElementById('sms-tab-rental').style.background = tab === 'rental' ? 'var(--red)' : 'transparent';
+  document.getElementById('sms-tab-rental').style.color = tab === 'rental' ? '#fff' : 'var(--text2)';
+  document.getElementById('sms-virtual').style.display = tab === 'virtual' ? 'block' : 'none';
+  document.getElementById('sms-rental').style.display = tab === 'rental' ? 'block' : 'none';
+}
+
+function selectSMSType(type) {
+  document.getElementById('sms-prime').style.background = type === 'prime' ? 'var(--red)' : 'transparent';
+  document.getElementById('sms-prime').style.color = type === 'prime' ? '#fff' : 'var(--text2)';
+  document.getElementById('sms-alternate').style.background = type === 'alternate' ? 'var(--red)' : 'transparent';
+  document.getElementById('sms-alternate').style.color = type === 'alternate' ? '#fff' : 'var(--text2)';
+}
+
+function updateSMSPrice() {
+  const country = document.getElementById('smsCountry').value;
+  const service = document.getElementById('smsService').value;
+  if (!country || !service) { document.getElementById('smsPrice').textContent = '₦0.00'; document.getElementById('smsStock').textContent = '—'; return; }
+  const countryPrice = parseInt(country.split('|')[1]) || 0;
+  const serviceExtra = parseInt(service.split('|')[1]) || 0;
+  const total = countryPrice + serviceExtra;
+  document.getElementById('smsPrice').textContent = '₦' + total.toLocaleString() + '.00';
+  document.getElementById('smsStock').textContent = Math.floor(Math.random() * 50 + 10) + ' available';
+  // Update wallet balance display
+  if (currentProfile) {
+    document.getElementById('smsWalletBal').textContent = (currentProfile.wallet_balance || 0).toLocaleString('en-NG', {minimumFractionDigits:2});
+  }
+}
+
+async function placeNumberOrder() {
+  const country = document.getElementById('smsCountry').value;
+  const service = document.getElementById('smsService').value;
+  if (!country || !service) { showToast('⚠️ Please select country and service'); return; }
+  const countryPrice = parseInt(country.split('|')[1]) || 0;
+  const serviceExtra = parseInt(service.split('|')[1]) || 0;
+  const total = countryPrice + serviceExtra;
+  const countryName = document.getElementById('smsCountry').options[document.getElementById('smsCountry').selectedIndex].text;
+  const serviceName = service.split('|')[0];
+  if (!currentProfile || currentProfile.wallet_balance < total) { showToast('❌ Insufficient balance. Please deposit funds.'); nav('deposit'); return; }
+  const btn = document.getElementById('smsOrderBtn');
+  btn.innerHTML = '<span class="loader"></span>Processing...'; btn.disabled = true;
+  // Deduct wallet
+  const newBal = Number(currentProfile.wallet_balance) - total;
+  await sb.from('profiles').update({ wallet_balance: newBal }).eq('id', currentUser.id);
+  currentProfile.wallet_balance = newBal;
+  updateDrawer();
+  // Generate random number based on country
+  const prefixes = {'US':'+1','UK':'+44','CA':'+1','NG':'+234','DE':'+49','FR':'+33','IN':'+91','BR':'+55','RU':'+7','CN':'+86','AU':'+61','JP':'+81','MX':'+52','SE':'+46','PH':'+63','ID':'+62','PK':'+92','GH':'+233','KE':'+254','ZA':'+27'};
+  const countryCode = country.split('|')[0];
+  const prefix = prefixes[countryCode] || '+1';
+  const number = prefix + ' (' + Math.floor(Math.random()*900+100) + ') ' + Math.floor(Math.random()*900+100) + '-' + Math.floor(Math.random()*9000+1000);
+  // Show result
+  document.getElementById('smsAssignedNumber').textContent = number;
+  document.getElementById('smsNumberService').textContent = 'Service: ' + serviceName + ' · ' + countryName;
+  document.getElementById('smsNumberResult').style.display = 'block';
+  document.getElementById('smsWalletBal').textContent = newBal.toLocaleString('en-NG', {minimumFractionDigits:2});
+  showToast('✅ Number assigned! ₦' + total.toLocaleString() + ' deducted.');
+  btn.innerHTML = 'Place Order'; btn.disabled = false;
+}
+
+function copySMSNumber() {
+  const num = document.getElementById('smsAssignedNumber').textContent;
+  navigator.clipboard.writeText(num).then(() => showToast('📋 Number copied!')).catch(() => showToast('Number: ' + num));
+}
+
+function getSMSNumber() { document.getElementById('smsResult') && (document.getElementById('smsResult').style.display = 'block'); showToast('✅ Virtual number assigned!'); }
+
+// =============================================
+// TOAST
+// =============================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+// =============================================
+// ADMIN - CREDIT WALLET (for you to use)
+// =============================================
+async function adminCreditWallet(userId, amount, depositRef) {
+  const { data: profile } = await sb.from('profiles').select('wallet_balance').eq('id', userId).single();
+  if (!profile) { alert('User not found'); return; }
+  const newBal = Number(profile.wallet_balance) + Number(amount);
+  await sb.from('profiles').update({ wallet_balance: newBal }).eq('id', userId);
+  await sb.from('deposits').update({ status: 'confirmed' }).eq('paystack_ref', depositRef);
+  alert('✅ Wallet credited! New balance: ₦' + newBal.toLocaleString());
+}
+
+// =============================================
+// HELPERS
+// =============================================
+function badgeClass(status) {
+  if (status==='completed') return 'badge-green';
+  if (status==='pending') return 'badge-orange';
+  return 'badge-red2';
+}
+function fmtDate(d) {
+  if (!d) return '-';
+  return new Date(d).toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'});
+}
+</script>
+</body>
+</html>
